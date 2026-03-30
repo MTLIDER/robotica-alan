@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Alan's Robot Lab 🤖</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   VARIABLES & RESET
+═══════════════════════════════════════════ */
+:root {
+  --orange:     #F97316;
+  --orange-d:   #EA6700;
+  --orange-l:   #FFF3E9;
+  --navy:       #0F2240;
+  --navy-m:     #1A3A6B;
+  --navy-l:     #E8EDF5;
+  --red:        #CC1F1F;
+  --red-l:      #FFF0F0;
+  --black:      #0D0D0D;
+  --white:      #FFFFFF;
+  --bg:         #F5F7FA;
+  --card:       #FFFFFF;
+  --text:       #111827;
+  --text-s:     #6B7280;
+  --border:     #E5E7EB;
+  --shadow:     0 2px 12px rgba(15,34,64,.10);
+  --shadow-lg:  0 8px 32px rgba(15,34,64,.15);
+  --radius:     14px;
+  --radius-sm:  8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overscroll-behavior:none;}
+button{font-family:'Nunito',sans-serif;cursor:pointer;}
+input,textarea,select{font-family:'Nunito',sans-serif;}
+img{max-width:100%;}
+
+/* ═══════════════════════════════════════════
+   LAYOUT HELPERS
+═══════════════════════════════════════════ */
+.screen{display:none;min-height:100vh;flex-direction:column;}
+.screen.active{display:flex;}
+.container{width:100%;max-width:480px;margin:0 auto;padding:0 16px;}
+.spacer{flex:1;}
+
+/* ═══════════════════════════════════════════
+   TOP BARS
+═══════════════════════════════════════════ */
+.topbar{background:var(--navy);color:var(--white);padding:14px 16px;position:sticky;top:0;z-index:100;
+  display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.25);}
+.topbar-title{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;letter-spacing:1px;flex:1;}
+.topbar-sub{font-size:10px;color:#8899BB;margin-top:2px;}
+.topbar-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:var(--radius-sm);
+  color:var(--white);padding:7px 13px;font-size:11px;font-weight:700;letter-spacing:.5px;}
+.topbar-btn:hover{background:rgba(255,255,255,.18);}
+.progress-strip{height:4px;background:rgba(255,255,255,.12);}
+.progress-fill{height:4px;background:var(--orange);transition:width .4s ease;border-radius:2px;}
+
+/* ═══════════════════════════════════════════
+   HOME SCREEN
+═══════════════════════════════════════════ */
+.home-hero{background:linear-gradient(145deg,var(--navy) 0%,var(--navy-m) 100%);
+  padding:40px 20px 36px;text-align:center;position:relative;overflow:hidden;}
+.home-hero::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 80% 20%,rgba(249,115,22,.18) 0%,transparent 60%),
+              radial-gradient(circle at 10% 80%,rgba(204,31,31,.12) 0%,transparent 50%);}
+.hero-robot{font-size:60px;margin-bottom:12px;position:relative;z-index:1;animation:float 3s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+.hero-name{font-family:'Orbitron',monospace;font-size:22px;font-weight:900;color:var(--white);
+  position:relative;z-index:1;letter-spacing:2px;}
+.hero-name span{color:var(--orange);}
+.hero-sub{font-size:12px;color:#8899CC;margin-top:6px;position:relative;z-index:1;letter-spacing:2px;}
+.hero-stats{display:flex;justify-content:center;gap:10px;margin-top:18px;position:relative;z-index:1;}
+.hero-stat{background:rgba(255,255,255,.08);border:1px solid rgba(249,115,22,.25);
+  border-radius:20px;padding:5px 14px;font-size:11px;color:#AABBD0;font-weight:700;}
+.hero-stat b{color:var(--orange);}
+
+.role-cards{padding:20px 16px;display:flex;flex-direction:column;gap:12px;}
+.role-card{background:var(--card);border-radius:var(--radius);padding:20px;border:2px solid var(--border);
+  display:flex;gap:14px;align-items:center;box-shadow:var(--shadow);transition:all .2s;}
+.role-card:hover,.role-card:active{transform:translateY(-2px);box-shadow:var(--shadow-lg);}
+.role-card.student{border-left:5px solid var(--orange);}
+.role-card.parent{border-left:5px solid var(--navy);}
+.role-icon{font-size:40px;flex-shrink:0;}
+.role-title{font-weight:800;font-size:16px;margin-bottom:3px;}
+.role-desc{font-size:12px;color:var(--text-s);line-height:1.5;}
+.role-card.student .role-title{color:var(--orange-d);}
+.role-card.parent .role-title{color:var(--navy);}
+
+/* ═══════════════════════════════════════════
+   MODULE TABS (horizontal scroll)
+═══════════════════════════════════════════ */
+.mod-tabs{background:var(--white);border-bottom:2px solid var(--border);
+  display:flex;overflow-x:auto;scrollbar-width:none;position:sticky;top:62px;z-index:90;}
+.mod-tabs::-webkit-scrollbar{display:none;}
+.mod-tab{padding:10px 16px;min-width:70px;text-align:center;border:none;
+  background:transparent;color:var(--text-s);font-size:9px;font-weight:700;
+  letter-spacing:.5px;flex-shrink:0;border-bottom:3px solid transparent;
+  transition:all .2s;font-family:'Nunito',sans-serif;}
+.mod-tab.active{color:var(--orange);border-bottom-color:var(--orange);background:var(--orange-l);}
+.mod-tab.locked{color:#CCC;cursor:not-allowed;}
+.mod-tab .tab-emoji{display:block;font-size:18px;margin-bottom:2px;}
+.mod-tab .tab-count{display:block;font-size:8px;margin-top:2px;}
+.tab-lock{display:block;font-size:14px;margin-bottom:2px;}
+
+/* ═══════════════════════════════════════════
+   SECTION TABS (Module | Bitácora)
+═══════════════════════════════════════════ */
+.section-tabs{display:flex;background:var(--white);border-bottom:2px solid var(--border);}
+.section-tab{flex:1;padding:12px;border:none;background:transparent;
+  font-weight:700;font-size:12px;color:var(--text-s);border-bottom:3px solid transparent;
+  transition:all .2s;font-family:'Nunito',sans-serif;}
+.section-tab.active{color:var(--orange);border-bottom-color:var(--orange);}
+
+/* ═══════════════════════════════════════════
+   CARDS / STEPS
+═══════════════════════════════════════════ */
+.page-body{padding:16px;display:flex;flex-direction:column;gap:14px;}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;border:1.5px solid var(--border);}
+.card-head{padding:14px 16px;border-bottom:1.5px solid var(--border);display:flex;gap:12px;align-items:flex-start;}
+.card-head.done{background:linear-gradient(90deg,var(--orange-l),var(--white));}
+.step-circle{width:32px;height:32px;border-radius:50%;background:var(--orange-l);
+  color:var(--orange);display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:13px;flex-shrink:0;border:2px solid var(--orange);}
+.step-circle.done{background:var(--orange);color:var(--white);}
+.step-label{font-size:9px;color:var(--orange);font-weight:800;letter-spacing:2px;margin-bottom:2px;}
+.step-title{font-weight:800;font-size:14px;color:var(--text);}
+.step-title.done{color:var(--orange-d);}
+.card-body{padding:14px 16px;}
+.step-text{font-size:13px;color:#374151;line-height:1.8;margin-bottom:14px;white-space:pre-line;}
+
+/* TIP & ACTION boxes */
+.tip-box{background:var(--orange-l);border-left:4px solid var(--orange);
+  border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:10px 13px;
+  margin-bottom:10px;display:flex;gap:10px;font-size:12px;color:var(--orange-d);line-height:1.6;font-weight:600;}
+.action-box{background:var(--navy-l);border-left:4px solid var(--navy);
+  border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:10px 13px;
+  margin-bottom:14px;display:flex;gap:10px;font-size:12px;color:var(--navy);line-height:1.6;font-weight:600;}
+.warn-box{background:var(--red-l);border-left:4px solid var(--red);
+  border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:10px 13px;
+  font-size:12px;color:var(--red);line-height:1.6;font-weight:700;margin-bottom:14px;}
+
+/* ═══════════════════════════════════════════
+   IMAGE SLOTS
+═══════════════════════════════════════════ */
+.img-slot{border:2px dashed var(--border);border-radius:var(--radius-sm);
+  overflow:hidden;margin-bottom:14px;background:var(--bg);}
+.img-slot img{width:100%;display:block;}
+.img-placeholder{padding:20px;text-align:center;}
+.img-placeholder .ph-icon{font-size:28px;margin-bottom:4px;}
+.img-placeholder p{font-size:11px;color:#9CA3AF;}
+
+/* ═══════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════ */
+.btn{display:block;width:100%;padding:13px 16px;border-radius:var(--radius-sm);
+  font-weight:800;font-size:13px;letter-spacing:.5px;border:none;transition:all .2s;}
+.btn-orange{background:var(--orange);color:var(--white);}
+.btn-orange:hover,.btn-orange:active{background:var(--orange-d);transform:translateY(-1px);}
+.btn-navy{background:var(--navy);color:var(--white);}
+.btn-navy:hover{background:var(--navy-m);}
+.btn-outline{background:transparent;color:var(--orange);border:2px solid var(--orange);}
+.btn-outline-navy{background:transparent;color:var(--navy);border:2px solid var(--navy);}
+.btn-danger{background:var(--red);color:var(--white);}
+.btn-ghost{background:transparent;color:var(--text-s);border:1.5px solid var(--border);}
+.btn-done{background:#D1FAE5;color:#065F46;border:none;}
+.btn-done:hover{background:#A7F3D0;}
+.btn-sm{padding:8px 14px;font-size:11px;border-radius:6px;}
+
+/* ═══════════════════════════════════════════
+   COMPLETION BANNER
+═══════════════════════════════════════════ */
+.completion-banner{background:linear-gradient(135deg,var(--orange),var(--red));
+  border-radius:var(--radius);padding:20px;text-align:center;color:var(--white);}
+.completion-banner .cb-emoji{font-size:36px;margin-bottom:8px;}
+.completion-banner h3{font-family:'Orbitron',monospace;font-size:15px;font-weight:900;margin-bottom:6px;}
+.completion-banner p{font-size:12px;opacity:.9;line-height:1.6;}
+
+/* ═══════════════════════════════════════════
+   PIN SCREEN
+═══════════════════════════════════════════ */
+.pin-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 16px;gap:20px;}
+.pin-dots{display:flex;gap:12px;}
+.pin-dot{width:48px;height:56px;background:var(--white);border:2px solid var(--border);
+  border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;
+  font-size:24px;font-weight:900;box-shadow:var(--shadow);}
+.pin-dot.filled{border-color:var(--orange);color:var(--orange);}
+.pin-dot.error{border-color:var(--red);animation:shake .3s ease;}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:220px;}
+.pin-key{padding:15px;background:var(--white);border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);font-size:20px;font-weight:800;color:var(--navy);
+  box-shadow:var(--shadow);transition:all .1s;}
+.pin-key:active{background:var(--navy-l);transform:scale(.95);}
+.pin-key.empty{background:transparent;border-color:transparent;box-shadow:none;cursor:default;}
+.pin-key.del{color:var(--red);}
+.pin-error{font-size:12px;color:var(--red);font-weight:700;}
+.pin-hint{font-size:11px;color:var(--text-s);}
+
+/* ═══════════════════════════════════════════
+   PARENT TABS
+═══════════════════════════════════════════ */
+.parent-tabs{display:flex;background:var(--white);border-bottom:2px solid var(--border);overflow-x:auto;scrollbar-width:none;}
+.parent-tabs::-webkit-scrollbar{display:none;}
+.parent-tab{padding:12px 16px;min-width:80px;text-align:center;border:none;background:transparent;
+  font-size:10px;font-weight:800;color:var(--text-s);border-bottom:3px solid transparent;
+  letter-spacing:.5px;flex-shrink:0;font-family:'Nunito',sans-serif;transition:all .2s;}
+.parent-tab.active{color:var(--navy);border-bottom-color:var(--navy);background:var(--navy-l);}
+
+/* ═══════════════════════════════════════════
+   UNLOCK CARDS
+═══════════════════════════════════════════ */
+.unlock-card{background:var(--card);border-radius:var(--radius);padding:14px 16px;
+  border:2px solid var(--border);box-shadow:var(--shadow);display:flex;
+  justify-content:space-between;align-items:center;gap:12px;}
+.unlock-card.active-mod{border-color:var(--orange);background:var(--orange-l);}
+.unlock-card.done-mod{border-color:#10B981;background:#ECFDF5;}
+.uc-info{}
+.uc-badge{font-size:9px;font-weight:800;letter-spacing:1.5px;margin-bottom:3px;}
+.uc-title{font-weight:800;font-size:13px;}
+.uc-progress{font-size:11px;color:var(--text-s);margin-top:2px;}
+.uc-btn{flex-shrink:0;}
+.active-tag{background:var(--orange);color:var(--white);border-radius:20px;
+  padding:5px 12px;font-size:10px;font-weight:800;letter-spacing:.5px;}
+.done-tag{background:#10B981;color:var(--white);border-radius:20px;
+  padding:5px 12px;font-size:10px;font-weight:800;}
+.locked-tag{background:#F3F4F6;color:#9CA3AF;border-radius:20px;
+  padding:5px 12px;font-size:10px;font-weight:800;}
+
+/* ═══════════════════════════════════════════
+   PROGRESS BAR
+═══════════════════════════════════════════ */
+.prog-bar-wrap{margin-top:8px;}
+.prog-bar-track{background:#E5E7EB;border-radius:4px;height:6px;}
+.prog-bar-fill{height:6px;border-radius:4px;transition:width .4s ease;}
+
+/* ═══════════════════════════════════════════
+   STATS CARD
+═══════════════════════════════════════════ */
+.stats-card{background:linear-gradient(135deg,var(--navy),var(--navy-m));
+  border-radius:var(--radius);padding:20px;color:var(--white);text-align:center;box-shadow:var(--shadow-lg);}
+.stats-number{font-family:'Orbitron',monospace;font-size:36px;font-weight:900;color:var(--orange);}
+.stats-label{font-size:12px;color:#8899CC;margin-top:4px;}
+.stats-pct{font-size:11px;color:var(--orange);margin-top:6px;font-weight:700;}
+
+/* ═══════════════════════════════════════════
+   BITACORA
+═══════════════════════════════════════════ */
+.bita-form{background:var(--card);border-radius:var(--radius);overflow:hidden;border:2px solid var(--orange);}
+.bita-form-head{background:var(--orange);padding:12px 16px;color:var(--white);
+  font-weight:800;font-size:12px;letter-spacing:1px;}
+.bita-form-body{padding:16px;}
+.field-label{font-size:10px;font-weight:800;color:var(--navy);letter-spacing:1px;margin-bottom:6px;}
+.field-input{width:100%;background:var(--bg);border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);padding:10px 13px;color:var(--text);font-size:13px;
+  margin-bottom:14px;outline:none;transition:border-color .2s;}
+.field-input:focus{border-color:var(--orange);}
+textarea.field-input{resize:none;height:80px;line-height:1.6;}
+select.field-input{appearance:none;cursor:pointer;}
+.photo-drop{width:100%;min-height:100px;background:var(--bg);border:2px dashed var(--border);
+  border-radius:var(--radius-sm);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:6px;cursor:pointer;
+  margin-bottom:14px;transition:all .2s;padding:16px;}
+.photo-drop:active,.photo-drop:hover{border-color:var(--orange);background:var(--orange-l);}
+.photo-drop .pd-icon{font-size:28px;}
+.photo-drop p{font-size:11px;color:var(--text-s);font-weight:600;}
+.mood-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+.mood-btn{padding:8px 14px;background:var(--bg);border:2px solid var(--border);
+  border-radius:20px;font-size:16px;transition:all .2s;}
+.mood-btn.selected{background:var(--orange-l);border-color:var(--orange);transform:scale(1.15);}
+.bita-entry{background:var(--card);border-radius:var(--radius);overflow:hidden;
+  box-shadow:var(--shadow);border:1.5px solid var(--border);}
+.bita-entry-head{padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1.5px solid var(--border);}
+.bita-mod-tag{border-radius:20px;padding:4px 12px;font-size:10px;font-weight:800;}
+.bita-date{font-size:10px;color:var(--text-s);}
+.bita-entry-title{padding:10px 14px 4px;font-weight:800;font-size:14px;}
+.bita-entry-note{padding:4px 14px 10px;font-size:12px;color:var(--text-s);line-height:1.7;}
+.bita-entry-mood{padding:6px 14px 12px;font-size:18px;}
+
+/* ═══════════════════════════════════════════
+   LOADING OVERLAY
+═══════════════════════════════════════════ */
+.loading-overlay{position:fixed;inset:0;background:rgba(15,34,64,.6);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:999;gap:12px;}
+.loading-spinner{width:44px;height:44px;border:4px solid rgba(249,115,22,.3);
+  border-top-color:var(--orange);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{color:var(--white);font-weight:700;font-size:13px;}
+
+/* ═══════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════ */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--navy);color:var(--white);padding:12px 20px;border-radius:30px;
+  font-size:13px;font-weight:700;z-index:1000;opacity:0;transition:all .3s;
+  white-space:nowrap;box-shadow:var(--shadow-lg);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.orange{background:var(--orange);}
+.toast.green{background:#059669;}
+.toast.red{background:var(--red);}
+
+/* ═══════════════════════════════════════════
+   MATERIALS CHIPS
+═══════════════════════════════════════════ */
+.chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+.chip{background:var(--navy-l);color:var(--navy);border-radius:20px;
+  padding:5px 12px;font-size:11px;font-weight:700;border:1px solid #CBD5E8;}
+
+/* ═══════════════════════════════════════════
+   UTILITY
+═══════════════════════════════════════════ */
+.hidden{display:none!important;}
+.flex-row{display:flex;gap:8px;}
+.flex-row .btn{flex:1;}
+.section-title{font-size:10px;font-weight:800;letter-spacing:2px;color:var(--text-s);
+  margin-bottom:12px;text-transform:uppercase;}
+.mt-8{margin-top:8px;}
+.mt-16{margin-top:16px;}
+.info-box{background:var(--navy-l);border-radius:var(--radius-sm);padding:12px 14px;
+  font-size:12px;color:var(--navy-m);line-height:1.7;font-weight:600;}
+.info-box strong{color:var(--navy);}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════
+     LOADING OVERLAY
+════════════════════════════════════════ -->
+<div class="loading-overlay" id="loading">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Cargando Robot Lab...</div>
+</div>
+
+<!-- ════════════════════════════════════════
+     TOAST
+════════════════════════════════════════ -->
+<div class="toast" id="toast"></div>
+
+<!-- ════════════════════════════════════════
+     HIDDEN FILE INPUTS
+════════════════════════════════════════ -->
+<input type="file" id="file-img" accept="image/*" style="display:none">
+<input type="file" id="file-bita" accept="image/*" style="display:none">
+
+<!-- ════════════════════════════════════════
+     SCREEN: HOME
+════════════════════════════════════════ -->
+<div class="screen active" id="screen-home">
+  <div class="home-hero">
+    <div class="hero-robot">🤖</div>
+    <div class="hero-name">ALAN'S <span>ROBOT</span> LAB</div>
+    <div class="hero-sub">PROYECTO 1 · ROBOT SEGUIDOR DE LÍNEA</div>
+    <div class="hero-stats">
+      <div class="hero-stat" id="home-stat-steps">0/25 pasos ✓</div>
+      <div class="hero-stat" id="home-stat-mod">Módulo 1 activo</div>
+    </div>
+  </div>
+  <div class="role-cards">
+    <button class="role-card student" onclick="goKid()">
+      <div class="role-icon">👦</div>
+      <div>
+        <div class="role-title">¡Soy Alan! 🚀</div>
+        <div class="role-desc">Ver mis módulos, seguir el instructivo, marcar mis avances y escribir en la bitácora.</div>
+      </div>
+    </button>
+    <button class="role-card parent" onclick="goPin()">
+      <div class="role-icon">👨‍👩‍👦</div>
+      <div>
+        <div class="role-title">Soy el padre / madre</div>
+        <div class="role-desc">Subir imágenes a los pasos, desbloquear módulos y ver el progreso de Alan.</div>
+      </div>
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SCREEN: PIN
+════════════════════════════════════════ -->
+<div class="screen" id="screen-pin">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">ACCESO PADRES 🔒</div>
+    </div>
+    <button class="topbar-btn" onclick="showScreen('home')">← Volver</button>
+  </div>
+  <div class="pin-screen">
+    <div style="text-align:center">
+      <div style="font-size:40px;margin-bottom:8px">🔐</div>
+      <div style="font-weight:800;font-size:16px;color:var(--navy)">Ingresa el PIN</div>
+      <div style="font-size:12px;color:var(--text-s);margin-top:4px">Solo para papá y mamá</div>
+    </div>
+    <div class="pin-dots" id="pin-dots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-error hidden" id="pin-error">PIN incorrecto. Inténtalo de nuevo.</div>
+    <div class="pin-grid">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key empty" disabled></button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key del" onclick="pinDel()">⌫</button>
+    </div>
+    <div class="pin-hint">PIN predeterminado: <strong>1234</strong></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SCREEN: KID
+════════════════════════════════════════ -->
+<div class="screen" id="screen-kid">
+  <div class="topbar">
+    <div style="flex:1">
+      <div class="topbar-title" id="kid-topbar-title">🔍 MÓDULO 1</div>
+      <div class="topbar-sub" id="kid-topbar-sub">0/4 pasos completados</div>
+    </div>
+    <button class="topbar-btn" onclick="showScreen('home')">☰</button>
+  </div>
+  <div class="progress-strip"><div class="progress-fill" id="kid-progress-fill" style="width:0%"></div></div>
+
+  <!-- Section tabs -->
+  <div class="section-tabs">
+    <button class="section-tab active" id="stab-mod" onclick="kidSectionTab('mod')">📚 Mi Módulo</button>
+    <button class="section-tab" id="stab-bita" onclick="kidSectionTab('bita')">📓 Bitácora</button>
+  </div>
+
+  <!-- Module sub-tabs -->
+  <div class="mod-tabs" id="kid-mod-tabs"></div>
+
+  <!-- Module content -->
+  <div id="kid-mod-content" style="flex:1;overflow-y:auto;"></div>
+
+  <!-- Bitácora content -->
+  <div id="kid-bita-content" class="hidden" style="flex:1;overflow-y:auto;"></div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SCREEN: PARENT
+════════════════════════════════════════ -->
+<div class="screen" id="screen-parent">
+  <div class="topbar">
+    <div style="flex:1">
+      <div class="topbar-title">👨‍👩‍👦 PANEL DE PADRES</div>
+      <div class="topbar-sub" id="parent-topbar-sub">Robot Seguidor de Línea</div>
+    </div>
+    <button class="topbar-btn" onclick="showScreen('home')">Salir</button>
+  </div>
+
+  <!-- Parent tabs -->
+  <div class="parent-tabs">
+    <button class="parent-tab active" id="ptab-unlock" onclick="parentTab('unlock')">🔓 MÓDULOS</button>
+    <button class="parent-tab" id="ptab-images" onclick="parentTab('images')">🖼️ IMÁGENES</button>
+    <button class="parent-tab" id="ptab-progress" onclick="parentTab('progress')">📊 PROGRESO</button>
+    <button class="parent-tab" id="ptab-bita" onclick="parentTab('bita')">📓 BITÁCORA</button>
+  </div>
+
+  <!-- Module selector for images tab -->
+  <div class="mod-tabs hidden" id="parent-mod-tabs"></div>
+
+  <!-- Tab contents -->
+  <div id="parent-content" style="flex:1;overflow-y:auto;"></div>
+</div>
+
+<!-- ════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════ -->
+<script>
+// ╔════════════════════════════════════════╗
+// ║  CONFIGURATION — EDIT THIS!           ║
+// ╚════════════════════════════════════════╝
+const GAS_URL = "PASTE_YOUR_GAS_WEB_APP_URL_HERE";
+const PARENT_PIN = "1234"; // Change to your preferred PIN
+
+// ╔════════════════════════════════════════╗
+// ║  MODULE DATA                          ║
+// ╚════════════════════════════════════════╝
+const MOD_COLORS = ["#F97316","#1A3A6B","#CC1F1F","#7C3AED","#0369A1","#065F46"];
+const MOD_BG     = ["#FFF3E9","#E8EDF5","#FFF0F0","#F5F3FF","#E0F2FE","#ECFDF5"];
+
+const MODS = [
+  {id:1,emoji:"🔍",title:"Conoce Tus Herramientas",tiempo:"45 min",
+   desc:"Antes de armar, entender qué hace cada pieza.",
+   materiales:["Arduino UNO","Módulo L298N","2× Sensor ARD-377","2× Motor MOT-120","Cables Dupont"],
+   pasos:[
+    {n:1,titulo:"El Arduino UNO — el cerebro",texto:"Coloca el Arduino UNO sobre la mesa. Tiene pines digitales (0–13) arriba y analógicos (A0–A5) abajo. El puerto USB conecta a la computadora para enviarle programas. Los pines 5V y GND dan energía a los sensores.",tip:"El Arduino es como el cerebro del robot. Sin él, nada funciona.",accion:"Encuentra el pin 13, el pin 5V y el pin GND en tu Arduino."},
+    {n:2,titulo:"El L298N — los músculos",texto:"El módulo L298N tiene terminales de tornillo OUT1–OUT4 donde se conectan los motores. Los pines IN1–IN4 reciben órdenes del Arduino. Los terminales +12V, GND y +5V son la alimentación.",tip:"El Arduino da señales débiles. El L298N las convierte en fuerza real para mover los motores.",accion:"Encuentra los terminales OUT1, OUT2, OUT3 y OUT4 en el módulo L298N."},
+    {n:3,titulo:"El Sensor ARD-377 — los ojos",texto:"Tiene 3 pines: VCC (5V), GND y OUT (señal de salida).\n\nBlanco → OUT = 1 (HIGH)\nNegro  → OUT = 0 (LOW)\n\nAbajo tiene un LED infrarrojo emisor y un receptor.",tip:"El negro absorbe la luz infrarroja, el blanco la refleja. ¡Así el robot distingue la línea!",accion:"Alumbra con tu celular debajo del sensor. ¿Cambia el LED indicador?"},
+    {n:4,titulo:"Los Motores MOT-120 — las piernas",texto:"Eje metálico para la llanta. Cable rojo (+) y negro (–). Cambiando la polaridad el motor gira en sentido contrario. La caja reductora lo hace más lento pero con más fuerza para mover el robot.",tip:"Si el robot gira al revés cuando debe ir recto, solo intercambia los dos cables de ese motor.",accion:"Gira el eje del motor con el dedo. ¿Sientes la resistencia de la reducción de velocidad?"},
+   ]},
+  {id:2,emoji:"🧱",title:"Construyendo el Chasis",tiempo:"60–90 min",
+   desc:"Tu robot toma forma con piezas LEGO recicladas.",
+   materiales:["♻️ Piezas LEGO planas","2× Motor MOT-120","2× Llanta ARD-330","Ligas o zip ties"],
+   pasos:[
+    {n:1,titulo:"La base — el piso del robot",texto:"Busca piezas LEGO planas y arma una base de aproximadamente 15×10 cm. Usa solo piezas planas (1 bloque de alto) para que sea estable. Debe ser sólida y no flexionarse al agarrarla de los lados.",tip:"Cuanto más plana y firme sea la base, más estable será el robot en la pista.",accion:"Empuja la base de los lados. Si no se dobla, ¡está lista para seguir!"},
+    {n:2,titulo:"Soportes para los motores",texto:"Construye dos 'paredes' LEGO de 2–3 bloques de alto a cada lado trasero. Los motores van entre estas paredes. Usa ligas o zip ties para sujetarlos firmemente.",tip:"El motor debe quedar muy firme. Si se mueve al empujarlo con el dedo, agrega más ligas.",accion:"Empuja cada motor con el dedo. ¿Está firme y no se mueve? ✓"},
+    {n:3,titulo:"Instalar las llantas",texto:"Presiona las llantas ARD-330 en el eje del motor hasta que queden firmes. Si queda floja, envuelve el eje con cinta adhesiva antes de insertar la llanta. Las dos ruedas deben quedar exactamente a la misma altura.",tip:"Empuja el robot sobre la mesa. Si se tuerce al rodar, una llanta está más adentro que la otra.",accion:"Empuja el robot sobre la mesa. ¿Ruedan las dos llantas igual y va recto?"},
+    {n:4,titulo:"La rueda libre delantera",texto:"En la parte frontal necesitas un tercer punto de apoyo. Usa una rueda LEGO pequeña giratoria o una moneda pegada con cinta. Debe tocar el piso y deslizarse fácilmente en cualquier dirección.",tip:"El robot necesita exactamente 3 puntos de apoyo: rueda derecha + izquierda + apoyo delantero.",accion:"¿El robot se queda nivelado con los 3 apoyos? ¿No se inclina hacia adelante?"},
+    {n:5,titulo:"Plataforma para la electrónica",texto:"Construye un piso superior LEGO elevado 3–4 bloques sobre la base. Aquí vivirán el Arduino UNO y el módulo L298N. Deja espacio libre al frente para los sensores y sus cables.",tip:"Coloca el Arduino encima (sin conectar nada) para verificar que cabe cómodamente antes de seguir.",accion:"¿El Arduino cabe bien en la plataforma? ¿El robot no se tambalea? ✓"},
+   ]},
+  {id:3,emoji:"👁️",title:"Montando los Sensores",tiempo:"30–40 min",
+   desc:"Instalando los ojos del robot en la parte frontal inferior.",
+   materiales:["2× Sensor ARD-377","6 cables Dupont (3 por sensor)","Piezas LEGO pequeñas","Cinta doble cara"],
+   pasos:[
+    {n:1,titulo:"¿Dónde van los sensores?",texto:"Los 2 sensores van en la PARTE FRONTAL INFERIOR del chasis, apuntando directamente al piso. La altura ideal es 5–10mm del suelo (como el grosor de una moneda de $1). Uno ligeramente a la izquierda del centro, otro a la derecha.",tip:"Más de 15mm de altura = no detecta bien la línea. Muy pegado al piso = se raspa al rodar.",accion:"Pon una moneda de $1 bajo el frente del robot. ¿Hay espacio de 1–2 monedas entre el sensor y el piso?"},
+    {n:2,titulo:"Sujetar los sensores al chasis",texto:"Crea soportes con piezas LEGO pequeñas en la parte frontal-inferior del chasis. El sensor debe quedar perfectamente HORIZONTAL (plano, no inclinado). Alternativa fácil: cinta doble cara entre el sensor y una pieza LEGO plana.",tip:"La cinta doble cara es perfecta para esto: fácil de pegar y fácil de ajustar si necesitas moverlos.",accion:"¿Los dos sensores están exactamente a la misma altura y apuntan directo hacia abajo?"},
+    {n:3,titulo:"Pasar los cables hacia arriba",texto:"Cada sensor ARD-377 tiene 3 pines: VCC, GND y OUT. Conecta 3 cables Dupont a cada sensor (6 cables en total). Pasa los cables con cuidado hacia el piso superior usando las ranuras naturales entre bloques LEGO.",tip:"Usa colores consistentes: ROJO para VCC, NEGRO para GND, cualquier otro color para OUT (la señal).",accion:"¿Tienes 6 cables? Etiquétalos con pedacitos de cinta: S1-VCC, S1-GND, S1-OUT, S2-VCC, S2-GND, S2-OUT."},
+   ]},
+  {id:4,emoji:"🔌",title:"Conectando la Electrónica",tiempo:"60–90 min",
+   desc:"¡El momento clave! Toda la electrónica se une.",
+   warn:"⚠️ IMPORTANTE: Haz TODAS las conexiones con la batería DESCONECTADA y el USB DESENCHUFADO. Conecta la energía solo al final para probar.",
+   materiales:["Arduino UNO + cable USB","Módulo L298N","Cables Dupont","Portapilas 4×AA","Desarmador pequeño"],
+   pasos:[
+    {n:1,titulo:"El mapa de conexiones",texto:"Estudia bien el circuito antes de conectar cualquier cable:\n\n• Batería → L298N (da energía a los motores)\n• L298N → Motores (los hace girar)\n• L298N pin +5V → Arduino (alimenta el Arduino)\n• Arduino D5,D6,D9,D10 → L298N IN1–IN4 (órdenes)\n• Arduino D2, D3 → Sensores OUT (lectura)",tip:"Antes de conectar cada cable, dite en voz alta: '¿De dónde sale este cable? ¿A dónde va?' Así evitas errores.",accion:"Dibuja el diagrama en un papel y ve tachando cada conexión conforme la hagas."},
+    {n:2,titulo:"Motores al L298N",texto:"Motor DERECHO:\n  rojo  → OUT1\n  negro → OUT2\n\nMotor IZQUIERDO:\n  rojo  → OUT3\n  negro → OUT4\n\nUsa el desarmador para apretar los tornillos. Jala cada cable suavemente para verificar que esté firme.",tip:"¿El robot gira al revés cuando debe ir recto? Intercambia los cables de ese motor (OUT1↔OUT2 o OUT3↔OUT4).",accion:"Jala suavemente cada uno de los 4 cables de motor. ¿Están todos bien firmes? ✓"},
+    {n:3,titulo:"Batería al L298N",texto:"Cable ROJO del portapilas  → terminal +12V del L298N\nCable NEGRO del portapilas → terminal GND del L298N\n\n⚠️ VERIFICA DOS VECES la polaridad antes de conectar. Invertirla puede dañar el módulo permanentemente.",tip:"4 pilas AA = 6 voltios. Es suficiente para los motores. El L298N tiene un regulador que le da 5V al Arduino.",accion:"¿El cable ROJO va a +12V? ¿El NEGRO va a GND? Si es correcto, conecta. Si no, corrígelo AHORA."},
+    {n:4,titulo:"L298N → Arduino (pines de control)",texto:"Conecta 5 cables Dupont entre L298N y Arduino:\n\nIN1 → D5   IN2 → D6\nIN3 → D9   IN4 → D10\nGND → GND  ← (¡muy importante!)",tip:"El cable GND común es CRÍTICO. Sin él, el Arduino y el L298N no tienen la misma referencia eléctrica y el robot no funciona.",accion:"Cuenta tus cables: ¿tienes 5 cables entre L298N y Arduino? (IN1, IN2, IN3, IN4 + GND) ✓"},
+    {n:5,titulo:"Sensores → Arduino",texto:"Sensor IZQUIERDO (S1):\n  VCC → pin 5V del Arduino\n  GND → pin GND del Arduino\n  OUT → pin D2 del Arduino\n\nSensor DERECHO (S2):\n  VCC → pin 5V del Arduino\n  GND → pin GND del Arduino\n  OUT → pin D3 del Arduino",tip:"El sensor que está físicamente a la IZQUIERDA del robot va al pin D2. El de la DERECHA al D3.",accion:"Revisa los 6 cables de sensores: ¿VCC a 5V? ¿GND a GND? ¿OUT izquierdo→D2 y OUT derecho→D3? ✓"},
+   ]},
+  {id:5,emoji:"💻",title:"Tu Primer Programa",tiempo:"60–90 min",
+   desc:"¡El robot recibe sus primeras órdenes de programación!",
+   materiales:["Computadora con Arduino IDE 2.x","Cable USB A–B","Arduino conectado al chasis"],
+   pasos:[
+    {n:1,titulo:"Instalar Arduino IDE (gratis)",texto:"Ve a arduino.cc/en/software → descarga Arduino IDE 2.x → instala normalmente.\n\nAl abrir verás un programa vacío con 2 funciones:\n\nvoid setup() {\n  // Se ejecuta UNA VEZ al encender\n}\nvoid loop() {\n  // Se repite SIEMPRE (como un corazón)\n}",tip:"setup() prepara al robot al encender (define qué pines son salidas). loop() es donde vive el código que el robot repite eternamente.",accion:"¿Ves las dos funciones setup() y loop() en el editor? ¡Ya tienes tu primer programa vacío!"},
+    {n:2,titulo:"Programa 1 — ¡Robot, muévete!",texto:"Escribe este código exactamente:\n\nvoid setup() {\n  pinMode(5,OUTPUT);  // IN1\n  pinMode(6,OUTPUT);  // IN2\n  pinMode(9,OUTPUT);  // IN3\n  pinMode(10,OUTPUT); // IN4\n}\nvoid loop() {\n  // Motor derecho adelante\n  digitalWrite(5,HIGH);\n  digitalWrite(6,LOW);\n  // Motor izquierdo adelante\n  digitalWrite(9,HIGH);\n  digitalWrite(10,LOW);\n}",tip:"HIGH = encendido, LOW = apagado. Cambiando cuál es HIGH y cuál LOW cambias la dirección de giro del motor.",accion:"Escribe el código. Clic en ✓ (Verificar). ¿El mensaje dice '0 errores'?"},
+    {n:3,titulo:"Subir el programa al Arduino",texto:"1. Conecta Arduino a la computadora con el cable USB\n2. Herramientas → Placa → Arduino UNO\n3. Herramientas → Puerto → elige el COM que aparece\n4. Clic en → (botón Subir)\n5. Espera 10–15 segundos...\n\n¡Si las ruedas giran al subir, el programa funcionó!",tip:"Error 'Port not found': desconecta y reconecta el USB y vuelve a seleccionar el puerto. Error 'avrdude': el cable USB es solo de carga, necesitas uno de datos.",accion:"¿Giran los 2 motores hacia adelante? Si uno va al revés, intercambia sus cables en el L298N (sin cambiar el código)."},
+    {n:4,titulo:"Programa 2 — Ver qué ven los sensores",texto:"Modifica el código así:\n\nvoid setup() {\n  Serial.begin(9600);\n}\nvoid loop() {\n  int s1 = digitalRead(2);\n  int s2 = digitalRead(3);\n  Serial.print(\"Izq:\");\n  Serial.print(s1);\n  Serial.print(\" Der:\");\n  Serial.println(s2);\n  delay(300);\n}\n\nSube → Herramientas → Monitor Serie → pon velocidad 9600.",tip:"Debe mostrar '1' cuando el sensor apunta a fondo BLANCO y '0' cuando apunta a la línea NEGRA. Si es al revés, gira el potenciómetro del sensor con un desarmador.",accion:"Pon fondo blanco bajo los sensores → ¿muestra 'Izq:1 Der:1'?\nPon cinta negra → ¿muestra 'Izq:0 Der:0'?"},
+   ]},
+  {id:6,emoji:"🏁",title:"El Algoritmo y la Pista",tiempo:"60–90 min",
+   desc:"¡El robot piensa y corre por sí solo!",
+   materiales:["Robot completamente armado y probado","Cartulina blanca grande (mín. 90×60cm)","Cinta negra adhesiva de 2–3cm de ancho","Computadora con Arduino IDE"],
+   pasos:[
+    {n:1,titulo:"Hacer la pista",texto:"En la cartulina blanca traza una pista oval con cinta negra:\n\n✅ Línea de 2–3 cm de ancho\n✅ Curvas con radio mínimo de 15 cm\n✅ Línea continua sin interrupciones\n✅ Hazla en el PISO, no en una mesa\n\n¡Empieza con un óvalo simple!",tip:"Después de que funcione con el óvalo puedes agregarle curvas en S y ángulos de 90° para hacerlo más difícil.",accion:"Pon el robot sobre la línea. ¿Los dos sensores quedan justo encima de la cinta negra?"},
+    {n:2,titulo:"El código seguidor de línea completo",texto:"Escribe este programa completo en Arduino IDE:\n\nconst int IN1=5,IN2=6,IN3=9,IN4=10;\nconst int SL=2, SR=3;\n\nvoid adelante(){\n  digitalWrite(IN1,HIGH);digitalWrite(IN2,LOW);\n  digitalWrite(IN3,HIGH);digitalWrite(IN4,LOW);}\nvoid giraIzq(){\n  digitalWrite(IN1,LOW); digitalWrite(IN2,HIGH);\n  digitalWrite(IN3,HIGH);digitalWrite(IN4,LOW);}\nvoid giraDer(){\n  digitalWrite(IN1,HIGH);digitalWrite(IN2,LOW);\n  digitalWrite(IN3,LOW); digitalWrite(IN4,HIGH);}\nvoid setup(){\n  for(int p:{IN1,IN2,IN3,IN4}) pinMode(p,OUTPUT);}\nvoid loop(){\n  bool L=!digitalRead(SL);\n  bool R=!digitalRead(SR);\n  if(L&&R) adelante();\n  else if(L) giraIzq();\n  else if(R) giraDer();\n  else adelante();}",tip:"La lógica: los dos ven negro = vas recto. Solo izquierdo ve negro = te saliste a la derecha → gira izquierda para corregir.",accion:"Copia el código exactamente. ✓ Verificar → '0 errores'. Luego súbelo al Arduino."},
+    {n:3,titulo:"¡La primera prueba!",texto:"1. Desconecta el cable USB del Arduino\n2. Pon el robot al inicio de la pista\n   (los sensores SOBRE la línea negra)\n3. Conecta la batería\n4. ¡Observa y anota qué pasa!\n\nSi no funciona bien:\n• Ajusta el potenciómetro del sensor\n• Verifica que izquierdo/derecho no estén invertidos\n• Revisa todas las conexiones del Módulo 4",tip:"Zigzaguea mucho = los sensores están muy separados entre sí, acércalos más al centro. Pierde la línea en las curvas = amplía las curvas de la pista.",accion:"🎥 ¡GRABA UN VIDEO! Es el primer registro de tu portafolio de robótica. ¡Compártelo!"},
+    {n:4,titulo:"Mejoras y retos finales",texto:"¡Ahora que funciona, mejóralo!\n\n🎨 Decora el chasis con piezas LEGO de colores\n⚡ Usa analogWrite(pin, 180) para controlar la velocidad exacta (0–255)\n🏁 Crea una pista más difícil con curvas de 90°\n⏱ Mide el tiempo de vuelta con el cronómetro del celular\n🏆 Reto final: ¿puedes completarla en menos de 30 segundos?",tip:"Con analogWrite() puedes ir más rápido en las rectas y más lento en las curvas, ¡exactamente como hacen los autos de Fórmula 1!",accion:"🏆 ¿Completaste la pista en menos de 30 segundos? ¡Documenta tu mejor tiempo en la bitácora!"},
+   ]},
+];
+
+const MOODS = ["😄","🤩","💪","🤔","😤","🏆"];
+
+// ╔════════════════════════════════════════╗
+// ║  APP STATE                            ║
+// ╚════════════════════════════════════════╝
+let state = {
+  progress: {},   // {modId_stepN: bool}
+  unlocked: 1,    // current unlocked module id
+  images: {},     // {modId_stepN: url}
+  bitacora: [],   // [{id,modId,title,photo,note,mood,date}]
+};
+
+let kidActiveMod = 0;    // index into unlocked mods
+let parentActiveMod = 0; // index for image upload
+let parentActiveTab = "unlock";
+let kidActiveSection = "mod";
+let pinValue = "";
+let uploadKey = null;
+let bitaPhoto = null;
+let bitaMood = "";
+
+// ╔════════════════════════════════════════╗
+// ║  UTILITIES                            ║
+// ╚════════════════════════════════════════╝
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+}
+
+function showLoading(msg) {
+  document.getElementById('loading').style.display = 'flex';
+  document.querySelector('.loading-text').textContent = msg || 'Cargando...';
+}
+
+function hideLoading() {
+  document.getElementById('loading').style.display = 'none';
+}
+
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function compressImage(file, maxW=800, quality=0.72) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxW / img.width);
+        const c = document.createElement('canvas');
+        c.width = img.width * scale;
+        c.height = img.height * scale;
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        resolve(c.toDataURL('image/jpeg', quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function stepDone(modId, n) { return !!state.progress[`${modId}_${n}`]; }
+function modComplete(m) { return m.pasos.every(p => stepDone(m.id, p.n)); }
+function totalDone() { return Object.values(state.progress).filter(Boolean).length; }
+function totalSteps() { return MODS.reduce((a,m) => a + m.pasos.length, 0); }
+function unlockedMods() { return MODS.filter(m => m.id <= state.unlocked); }
+function modColor(id) { return MOD_COLORS[id-1] || '#F97316'; }
+function modBg(id) { return MOD_BG[id-1] || '#FFF3E9'; }
+
+// ╔════════════════════════════════════════╗
+// ║  API CALLS                            ║
+// ╚════════════════════════════════════════╝
+async function apiGet() {
+  const res = await fetch(GAS_URL + '?action=getAll&t=' + Date.now());
+  const data = await res.json();
+  if (data.progress) state.progress = data.progress;
+  if (data.unlocked !== undefined) state.unlocked = data.unlocked;
+  if (data.images) state.images = data.images;
+  if (data.bitacora) state.bitacora = data.bitacora;
+}
+
+async function apiPost(body) {
+  await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+// ╔════════════════════════════════════════╗
+// ║  NAVIGATION                           ║
+// ╚════════════════════════════════════════╝
+async function goKid() {
+  showLoading('Cargando módulos de Alan...');
+  try { await apiGet(); } catch(e) {}
+  hideLoading();
+  kidActiveMod = 0;
+  renderKid();
+  showScreen('kid');
+}
+
+function goPin() {
+  pinValue = '';
+  updatePinDisplay();
+  document.getElementById('pin-error').classList.add('hidden');
+  showScreen('pin');
+}
+
+async function goParent() {
+  showLoading('Cargando panel de padres...');
+  try { await apiGet(); } catch(e) {}
+  hideLoading();
+  parentTab('unlock');
+  showScreen('parent');
+}
+
+// ╔════════════════════════════════════════╗
+// ║  PIN                                  ║
+// ╚════════════════════════════════════════╝
+function pinKey(k) {
+  if (pinValue.length >= 4) return;
+  pinValue += k;
+  updatePinDisplay();
+  if (pinValue.length === 4) {
+    if (pinValue === PARENT_PIN) {
+      setTimeout(() => goParent(), 200);
+    } else {
+      document.querySelectorAll('.pin-dot').forEach(d => d.classList.add('error'));
+      document.getElementById('pin-error').classList.remove('hidden');
+      setTimeout(() => {
+        pinValue = '';
+        updatePinDisplay();
+        document.querySelectorAll('.pin-dot').forEach(d => d.classList.remove('error'));
+      }, 700);
+    }
+  }
+}
+
+function pinDel() {
+  pinValue = pinValue.slice(0, -1);
+  updatePinDisplay();
+  document.getElementById('pin-error').classList.add('hidden');
+}
+
+function updatePinDisplay() {
+  for (let i = 0; i < 4; i++) {
+    const dot = document.getElementById('pd' + i);
+    dot.textContent = pinValue[i] ? '●' : '';
+    dot.classList.toggle('filled', !!pinValue[i]);
+  }
+}
+
+// ╔════════════════════════════════════════╗
+// ║  KID VIEW                             ║
+// ╚════════════════════════════════════════╝
+function kidSectionTab(tab) {
+  kidActiveSection = tab;
+  document.getElementById('stab-mod').classList.toggle('active', tab === 'mod');
+  document.getElementById('stab-bita').classList.toggle('active', tab === 'bita');
+  document.getElementById('kid-mod-content').classList.toggle('hidden', tab !== 'mod');
+  document.getElementById('kid-bita-content').classList.toggle('hidden', tab !== 'bita');
+  document.getElementById('kid-mod-tabs').classList.toggle('hidden', tab !== 'mod');
+  if (tab === 'bita') renderKidBita();
+}
+
+function renderKid() {
+  const mods = unlockedMods();
+  if (!mods.length) return;
+  const mod = mods[Math.min(kidActiveMod, mods.length - 1)];
+
+  // Topbar
+  document.getElementById('kid-topbar-title').textContent = mod.emoji + ' ' + mod.title;
+  const done = mod.pasos.filter(p => stepDone(mod.id, p.n)).length;
+  document.getElementById('kid-topbar-sub').textContent = `${done}/${mod.pasos.length} pasos · ${mod.tiempo}`;
+  const pct = (totalDone() / totalSteps()) * 100;
+  document.getElementById('kid-progress-fill').style.width = pct + '%';
+
+  // Module tabs
+  const tabsEl = document.getElementById('kid-mod-tabs');
+  tabsEl.innerHTML = '';
+  mods.forEach((m, i) => {
+    const d = m.pasos.filter(p => stepDone(m.id, p.n)).length;
+    const btn = document.createElement('button');
+    btn.className = 'mod-tab' + (i === kidActiveMod ? ' active' : '');
+    btn.style.setProperty('--c', modColor(m.id));
+    btn.innerHTML = `<span class="tab-emoji">${m.emoji}</span>Mód ${m.id}<span class="tab-count" style="color:${d===m.pasos.length?'#059669':'#9CA3AF'}">${d===m.pasos.length?'✅':d+'/'+m.pasos.length}</span>`;
+    btn.onclick = () => { kidActiveMod = i; renderKid(); kidSectionTab('mod'); };
+    tabsEl.appendChild(btn);
+  });
+  // Add locked next module
+  if (state.unlocked < 6) {
+    const next = MODS[state.unlocked];
+    const lockBtn = document.createElement('div');
+    lockBtn.className = 'mod-tab locked';
+    lockBtn.innerHTML = `<span class="tab-lock">🔒</span>Mód ${next.id}<span class="tab-count">bloqueado</span>`;
+    tabsEl.appendChild(lockBtn);
+  }
+
+  // Steps content
+  const content = document.getElementById('kid-mod-content');
+  let html = '<div class="page-body">';
+
+  // Materials
+  html += `<div><div class="section-title">📦 Materiales para este módulo</div>
+    <div class="chip-row">${mod.materiales.map(m2=>`<span class="chip">${m2}</span>`).join('')}</div></div>`;
+
+  // Warning
+  if (mod.warn) html += `<div class="warn-box">${mod.warn}</div>`;
+
+  // Steps
+  mod.pasos.forEach(paso => {
+    const done = stepDone(mod.id, paso.n);
+    const imgUrl = state.images[`${mod.id}_${paso.n}`];
+    html += `
+    <div class="card" id="step-card-${mod.id}-${paso.n}">
+      <div class="card-head${done?' done':''}">
+        <div class="step-circle${done?' done':''}" style="${!done?'border-color:'+modColor(mod.id)+';color:'+modColor(mod.id)+';background:'+modBg(mod.id):''}">${done?'✓':paso.n}</div>
+        <div style="flex:1">
+          <div class="step-label" style="color:${modColor(mod.id)}">PASO ${paso.n}</div>
+          <div class="step-title${done?' done':''}" style="${done?'color:'+modColor(mod.id):''}">${paso.titulo}</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="step-text">${paso.texto}</div>
+        <div class="img-slot">
+          ${imgUrl ? `<img src="${imgUrl}" alt="Imagen paso ${paso.n}">` : `<div class="img-placeholder"><div class="ph-icon">🖼️</div><p>Imagen pendiente — papá o mamá la subirá aquí</p></div>`}
+        </div>
+        <div class="tip-box"><span>💡</span><span>${paso.tip}</span></div>
+        <div class="action-box"><span>🎯</span><span>${paso.accion}</span></div>
+        <button class="btn ${done?'btn-done':'btn-orange'}" onclick="toggleStep(${mod.id},${paso.n})">
+          ${done?'✅ ¡Paso '+paso.n+' completado!':'⬜ Marcar paso '+paso.n+' como listo'}
+        </button>
+      </div>
+    </div>`;
+  });
+
+  // Completion banner
+  if (modComplete(mod)) {
+    html += `<div class="completion-banner">
+      <div class="cb-emoji">🎉</div>
+      <h3>¡Módulo ${mod.id} completado!</h3>
+      <p>${mod.id < 6 ? 'Avísale a papá o mamá para que revisen tu bitácora y desbloqueen el Módulo '+(mod.id+1)+' 🔓' : '🏆 ¡PROYECTO 1 COMPLETADO! ¡Eres un verdadero robotista, Alan!'}</p>
+    </div>`;
+  }
+
+  // Refresh button
+  html += `<button class="btn btn-ghost" onclick="refreshKid()">🔄 Actualizar imágenes</button>`;
+  html += '</div>';
+  content.innerHTML = html;
+
+  // Home stats
+  document.getElementById('home-stat-steps').innerHTML = `<b>${totalDone()}/${totalSteps()}</b> pasos ✓`;
+  document.getElementById('home-stat-mod').innerHTML = `Módulo <b>${state.unlocked}</b> activo`;
+}
+
+async function toggleStep(modId, n) {
+  const key = `${modId}_${n}`;
+  state.progress[key] = !state.progress[key];
+  renderKid();
+  try {
+    await apiPost({ action: 'toggleStep', key, value: state.progress[key] });
+    showToast(state.progress[key] ? '✅ ¡Paso completado!' : '↩️ Paso desmarcado', state.progress[key] ? 'green' : '');
+  } catch(e) { showToast('Sin conexión — se guardará luego', 'red'); }
+}
+
+async function refreshKid() {
+  showLoading('Actualizando imágenes...');
+  try { await apiGet(); renderKid(); showToast('✅ Actualizado'); }
+  catch(e) { showToast('Error al actualizar', 'red'); }
+  finally { hideLoading(); }
+}
+
+// ╔════════════════════════════════════════╗
+// ║  KID BITÁCORA                         ║
+// ╚════════════════════════════════════════╝
+function renderKidBita() {
+  const mods = unlockedMods();
+  const content = document.getElementById('kid-bita-content');
+  let html = '<div class="page-body">';
+
+  // Form
+  html += `<div class="bita-form">
+    <div class="bita-form-head">✏️ NUEVA ENTRADA DE BITÁCORA</div>
+    <div class="bita-form-body">
+      <div class="field-label">MÓDULO</div>
+      <select class="field-input" id="bita-mod">
+        ${mods.map(m=>`<option value="${m.id}">${m.emoji} Módulo ${m.id} — ${m.title}</option>`).join('')}
+      </select>
+      <div class="field-label">TÍTULO DE TU AVANCE</div>
+      <input class="field-input" id="bita-title" placeholder="Ej: Terminé de armar el chasis con LEGO">
+      <div class="field-label">FOTO DE EVIDENCIA</div>
+      <div id="bita-photo-area">
+        <div class="photo-drop" onclick="document.getElementById('file-bita').click()">
+          <div class="pd-icon">📷</div>
+          <p>Toca para agregar una foto desde tu galería</p>
+        </div>
+      </div>
+      <div class="field-label">¿QUÉ APRENDISTE O QUÉ PASÓ?</div>
+      <textarea class="field-input" id="bita-note" placeholder="Cuéntalo con tus propias palabras..."></textarea>
+      <div class="field-label">¿CÓMO TE SENTISTE?</div>
+      <div class="mood-row" id="mood-row">
+        ${MOODS.map(m=>`<button class="mood-btn" onclick="selectMood('${m}')">${m}</button>`).join('')}
+      </div>
+      <button class="btn btn-orange" onclick="saveBitaEntry()">✅ GUARDAR EN MI BITÁCORA</button>
+    </div>
+  </div>`;
+
+  // Previous entries
+  html += `<div class="section-title">📋 MIS ENTRADAS ANTERIORES (${state.bitacora.length})</div>`;
+  if (state.bitacora.length === 0) {
+    html += `<div class="card" style="padding:24px;text-align:center;color:var(--text-s)">📭 Aún no tienes entradas. ¡Agrega tu primer avance!</div>`;
+  } else {
+    state.bitacora.forEach(e => {
+      const c = modColor(e.modId);
+      const bg = modBg(e.modId);
+      html += `<div class="bita-entry">
+        <div class="bita-entry-head">
+          <span class="bita-mod-tag" style="background:${bg};color:${c}">${MODS[e.modId-1]?.emoji} Módulo ${e.modId}</span>
+          <span class="bita-date">${e.date}</span>
+        </div>
+        <div class="bita-entry-title">${e.title}</div>
+        ${e.photo?`<img src="${e.photo}" style="width:100%;display:block;">` : ''}
+        ${e.note?`<div class="bita-entry-note">${e.note.replace(/\n/g,'<br>')}</div>`:''}
+        ${e.mood?`<div class="bita-entry-mood">${e.mood}</div>`:''}
+      </div>`;
+    });
+  }
+
+  html += '</div>';
+  content.innerHTML = html;
+}
+
+function selectMood(m) {
+  bitaMood = (bitaMood === m) ? '' : m;
+  document.querySelectorAll('.mood-btn').forEach(b => {
+    b.classList.toggle('selected', b.textContent === bitaMood);
+  });
+}
+
+async function saveBitaEntry() {
+  const title = document.getElementById('bita-title').value.trim();
+  if (!title) { showToast('Escribe un título para tu avance 👆', 'red'); return; }
+  const modId = parseInt(document.getElementById('bita-mod').value);
+  const note = document.getElementById('bita-note').value.trim();
+  const entry = {
+    id: Date.now(), modId, title,
+    photo: bitaPhoto || null,
+    note, mood: bitaMood,
+    date: new Date().toLocaleDateString('es-MX', {day:'numeric',month:'long',year:'numeric'})
+  };
+  state.bitacora.unshift(entry);
+  showLoading('Guardando en la bitácora...');
+  try {
+    await apiPost({ action: 'addBitaEntry', entry });
+    bitaPhoto = null; bitaMood = '';
+    renderKidBita();
+    showToast('✅ ¡Guardado en la bitácora!', 'green');
+  } catch(e) { showToast('Error al guardar', 'red'); }
+  finally { hideLoading(); }
+}
+
+// ╔════════════════════════════════════════╗
+// ║  PARENT VIEW                          ║
+// ╚════════════════════════════════════════╝
+function parentTab(tab) {
+  parentActiveTab = tab;
+  document.querySelectorAll('.parent-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('ptab-' + tab).classList.add('active');
+  const modTabs = document.getElementById('parent-mod-tabs');
+  modTabs.classList.toggle('hidden', tab !== 'images');
+  if (tab === 'images') renderParentModTabs();
+  renderParentContent();
+}
+
+function renderParentModTabs() {
+  const el = document.getElementById('parent-mod-tabs');
+  el.innerHTML = '';
+  MODS.forEach((m, i) => {
+    const cnt = m.pasos.filter(p => state.images[`${m.id}_${p.n}`]).length;
+    const btn = document.createElement('button');
+    btn.className = 'mod-tab' + (i === parentActiveMod ? ' active' : '');
+    btn.innerHTML = `<span class="tab-emoji">${m.emoji}</span>Mód ${m.id}<span class="tab-count" style="color:${cnt===m.pasos.length?'#059669':'#9CA3AF'}">${cnt}/${m.pasos.length} 🖼️</span>`;
+    btn.onclick = () => { parentActiveMod = i; renderParentModTabs(); renderParentContent(); };
+    el.appendChild(btn);
+  });
+}
+
+function renderParentContent() {
+  const content = document.getElementById('parent-content');
+  if (parentActiveTab === 'unlock') content.innerHTML = renderUnlock();
+  else if (parentActiveTab === 'images') content.innerHTML = renderParentImages();
+  else if (parentActiveTab === 'progress') content.innerHTML = renderProgress();
+  else if (parentActiveTab === 'bita') content.innerHTML = renderParentBita();
+}
+
+function renderUnlock() {
+  let html = '<div class="page-body">';
+  html += `<div class="info-box">💡 <strong>Cómo funciona:</strong> Alan solo puede ver el módulo actualmente activo. Cuando lo termine y anote su avance en la bitácora, tú lo revisas y desbloqueas el siguiente.</div>`;
+  html += `<div class="section-title" style="margin-top:4px">MÓDULO ACTIVO AHORA: Módulo ${state.unlocked}</div>`;
+  MODS.forEach(m => {
+    const done = modComplete(m);
+    const isActive = m.id === state.unlocked;
+    const isLocked = m.id > state.unlocked;
+    const stepsD = m.pasos.filter(p => stepDone(m.id, p.n)).length;
+    html += `<div class="unlock-card${isActive?' active-mod':done&&!isActive?' done-mod':''}">
+      <div class="uc-info">
+        <div class="uc-badge" style="color:${modColor(m.id)}">${m.emoji} MÓDULO ${m.id}</div>
+        <div class="uc-title">${m.title}</div>
+        <div class="uc-progress">${stepsD}/${m.pasos.length} pasos completados</div>
+        <div class="prog-bar-wrap" style="width:140px">
+          <div class="prog-bar-track"><div class="prog-bar-fill" style="width:${(stepsD/m.pasos.length)*100}%;background:${modColor(m.id)}"></div></div>
+        </div>
+      </div>
+      <div class="uc-btn">
+        ${isActive ? `<span class="active-tag">✓ ACTIVO</span>` : ''}
+        ${done && !isActive ? `<span class="done-tag">✅ LISTO</span>` : ''}
+        ${isLocked && m.id === state.unlocked + 1 ? `<button class="btn btn-navy btn-sm" onclick="doUnlock(${m.id})">🔓 Desbloquear</button>` : ''}
+        ${isLocked && m.id > state.unlocked + 1 ? `<span class="locked-tag">🔒 Bloqueado</span>` : ''}
+      </div>
+    </div>`;
+  });
+  html += `<button class="btn btn-ghost" onclick="refreshParent()">🔄 Actualizar datos</button>`;
+  html += '</div>';
+  return html;
+}
+
+async function doUnlock(modId) {
+  state.unlocked = modId;
+  showLoading('Desbloqueando módulo...');
+  try {
+    await apiPost({ action: 'unlock', modId });
+    renderParentContent();
+    showToast(`🔓 ¡Módulo ${modId} desbloqueado para Alan!`, 'orange');
+  } catch(e) { showToast('Error al desbloquear', 'red'); }
+  finally { hideLoading(); }
+}
+
+function renderParentImages() {
+  const mod = MODS[parentActiveMod];
+  let html = '<div class="page-body">';
+  html += `<div class="section-title">${mod.emoji} Módulo ${mod.id} — ${mod.title}</div>`;
+  mod.pasos.forEach(paso => {
+    const key = `${mod.id}_${paso.n}`;
+    const img = state.images[key];
+    html += `<div class="card">
+      <div class="card-head" style="background:${img?modBg(mod.id):''}">
+        <div class="step-circle" style="border-color:${modColor(mod.id)};color:${modColor(mod.id)};background:${modBg(mod.id)}">${paso.n}</div>
+        <div>
+          <div class="step-label" style="color:${modColor(mod.id)}">PASO ${paso.n}</div>
+          <div class="step-title">${paso.titulo}</div>
+        </div>
+        <div style="font-size:20px;margin-left:auto">${img?'✅':'📷'}</div>
+      </div>
+      <div class="card-body">
+        ${img ? `
+          <img src="${img}" style="width:100%;border-radius:8px;margin-bottom:12px;display:block;">
+          <div class="flex-row">
+            <button class="btn btn-outline btn-sm" onclick="triggerImgUpload('${key}')">🔄 Cambiar</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteImg('${key}')">🗑️ Borrar</button>
+          </div>` :
+          `<button class="btn btn-orange" onclick="triggerImgUpload('${key}')">📎 Subir imagen para este paso</button>`
+        }
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+function triggerImgUpload(key) {
+  uploadKey = key;
+  document.getElementById('file-img').click();
+}
+
+async function deleteImg(key) {
+  if (!confirm('¿Borrar esta imagen?')) return;
+  delete state.images[key];
+  renderParentContent();
+  try { await apiPost({ action: 'deleteImage', key }); showToast('🗑️ Imagen borrada'); }
+  catch(e) { showToast('Error al borrar', 'red'); }
+}
+
+function renderProgress() {
+  const done = totalDone(), total = totalSteps();
+  let html = '<div class="page-body">';
+  html += `<div class="stats-card">
+    <div class="stats-number">${done}<span style="font-size:20px;opacity:.5">/${total}</span></div>
+    <div class="stats-label">pasos completados por Alan</div>
+    <div class="prog-bar-wrap" style="margin-top:12px">
+      <div class="prog-bar-track" style="height:8px"><div class="prog-bar-fill" style="width:${(done/total)*100}%;background:var(--orange);height:8px"></div></div>
+    </div>
+    <div class="stats-pct">${Math.round((done/total)*100)}% del Proyecto 1 completado</div>
+  </div>`;
+  MODS.forEach(m => {
+    const d = m.pasos.filter(p => stepDone(m.id, p.n)).length;
+    const t = m.pasos.length;
+    const locked = m.id > state.unlocked;
+    html += `<div class="card" style="opacity:${locked?'.4':'1'}">
+      <div class="card-body">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div>
+            <div style="font-weight:800;font-size:13px;color:${locked?'#9CA3AF':modColor(m.id)}">${m.emoji} Módulo ${m.id} ${locked?'🔒':''}</div>
+            <div style="font-size:11px;color:var(--text-s)">${m.title}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-weight:900;font-size:16px;color:${modColor(m.id)}">${d}/${t}</div>
+            ${d===t?`<div style="font-size:10px;color:#059669;font-weight:800">✅ COMPLETO</div>`:''}
+          </div>
+        </div>
+        <div class="prog-bar-track"><div class="prog-bar-fill" style="width:${(d/t)*100}%;background:${modColor(m.id)}"></div></div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">
+          ${m.pasos.map(p=>`<span style="font-size:9px;padding:3px 8px;border-radius:12px;background:${stepDone(m.id,p.n)?modBg(m.id):'#F3F4F6'};color:${stepDone(m.id,p.n)?modColor(m.id):'#9CA3AF'};font-weight:800;border:1px solid ${stepDone(m.id,p.n)?modColor(m.id)+'40':'#E5E7EB'}">P${p.n} ${stepDone(m.id,p.n)?'✓':''}</span>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  });
+  html += `<button class="btn btn-ghost" onclick="refreshParent()">🔄 Actualizar datos</button>`;
+  html += '</div>';
+  return html;
+}
+
+function renderParentBita() {
+  let html = '<div class="page-body">';
+  html += `<div class="section-title">📓 ENTRADAS DE ALAN (${state.bitacora.length})</div>`;
+  if (state.bitacora.length === 0) {
+    html += `<div class="card" style="padding:24px;text-align:center;color:var(--text-s)">📭 Alan aún no ha escrito en su bitácora.</div>`;
+  } else {
+    state.bitacora.forEach(e => {
+      const c = modColor(e.modId);
+      const bg = modBg(e.modId);
+      html += `<div class="bita-entry">
+        <div class="bita-entry-head">
+          <span class="bita-mod-tag" style="background:${bg};color:${c}">${MODS[e.modId-1]?.emoji} Módulo ${e.modId}</span>
+          <span class="bita-date">${e.date}</span>
+        </div>
+        <div class="bita-entry-title">${e.title}</div>
+        ${e.photo?`<img src="${e.photo}" style="width:100%;display:block;">`:''}
+        ${e.note?`<div class="bita-entry-note">${e.note.replace(/\n/g,'<br>')}</div>`:''}
+        ${e.mood?`<div class="bita-entry-mood">${e.mood}</div>`:''}
+      </div>`;
+    });
+  }
+  html += `<button class="btn btn-ghost" onclick="refreshParent()">🔄 Actualizar bitácora</button>`;
+  html += '</div>';
+  return html;
+}
+
+async function refreshParent() {
+  showLoading('Actualizando datos...');
+  try { await apiGet(); renderParentContent(); if(parentActiveTab==='images') renderParentModTabs(); showToast('✅ Datos actualizados', 'green'); }
+  catch(e) { showToast('Error al actualizar', 'red'); }
+  finally { hideLoading(); }
+}
+
+// ╔════════════════════════════════════════╗
+// ║  FILE UPLOAD HANDLERS                 ║
+// ╚════════════════════════════════════════╝
+document.getElementById('file-img').addEventListener('change', async function(e) {
+  const file = e.target.files[0];
+  if (!file || !uploadKey) return;
+  showLoading('Comprimiendo y subiendo imagen...');
+  try {
+    const b64 = await compressImage(file, 800, 0.72);
+    await apiPost({ action: 'saveImage', key: uploadKey, imageBase64: b64 });
+    state.images[uploadKey] = b64;
+    renderParentContent();
+    renderParentModTabs();
+    showToast('✅ ¡Imagen subida!', 'green');
+  } catch(e2) { showToast('Error al subir imagen', 'red'); }
+  finally { hideLoading(); uploadKey = null; e.target.value = ''; }
+});
+
+document.getElementById('file-bita').addEventListener('change', async function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const b64 = await compressImage(file, 900, 0.75);
+  bitaPhoto = b64;
+  document.getElementById('bita-photo-area').innerHTML = `
+    <div style="position:relative;margin-bottom:14px">
+      <img src="${b64}" style="width:100%;border-radius:8px;display:block;">
+      <button onclick="clearBitaPhoto()" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.6);border:none;border-radius:16px;color:#fff;padding:5px 12px;font-size:11px;cursor:pointer">✕ Quitar</button>
+    </div>`;
+  e.target.value = '';
+});
+
+function clearBitaPhoto() {
+  bitaPhoto = null;
+  document.getElementById('bita-photo-area').innerHTML = `
+    <div class="photo-drop" onclick="document.getElementById('file-bita').click()">
+      <div class="pd-icon">📷</div>
+      <p>Toca para agregar una foto desde tu galería</p>
+    </div>`;
+}
+
+// ╔════════════════════════════════════════╗
+// ║  INIT                                 ║
+// ╚════════════════════════════════════════╝
+(async function init() {
+  try { await apiGet(); } catch(e) { console.warn('Offline start'); }
+  hideLoading();
+  document.getElementById('home-stat-steps').innerHTML = `<b>${totalDone()}/${totalSteps()}</b> pasos ✓`;
+  document.getElementById('home-stat-mod').innerHTML = `Módulo <b>${state.unlocked}</b> activo`;
+})();
+</script>
+</body>
+</html>
