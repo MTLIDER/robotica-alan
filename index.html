@@ -962,8 +962,9 @@ function renderUnlock() {
           <div class="prog-bar-track"><div class="prog-bar-fill" style="width:${(stepsD/m.pasos.length)*100}%;background:${modColor(m.id)}"></div></div>
         </div>
       </div>
-      <div class="uc-btn">
+      <div class="uc-btn" style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
         ${isActive ? `<span class="active-tag">✓ ACTIVO</span>` : ''}
+        ${isActive && m.id > 1 ? `<button class="btn btn-danger btn-sm" onclick="doRelock(${m.id})">🔒 Volver a bloquear</button>` : ''}
         ${done && !isActive ? `<span class="done-tag">✅ LISTO</span>` : ''}
         ${isLocked && m.id === state.unlocked + 1 ? `<button class="btn btn-navy btn-sm" onclick="doUnlock(${m.id})">🔓 Desbloquear</button>` : ''}
         ${isLocked && m.id > state.unlocked + 1 ? `<span class="locked-tag">🔒 Bloqueado</span>` : ''}
@@ -983,6 +984,19 @@ async function doUnlock(modId) {
     renderParentContent();
     showToast(`🔓 ¡Módulo ${modId} desbloqueado para Alan!`, 'orange');
   } catch(e) { showToast('Error al desbloquear', 'red'); }
+  finally { hideLoading(); }
+}
+
+async function doRelock(modId) {
+  if (!confirm(`¿Volver a bloquear el Módulo ${modId}?\n\nAlan ya no podrá verlo hasta que lo desbloquees de nuevo.\n\nSus respuestas y avances guardados NO se borran.`)) return;
+  const prevMod = modId - 1;
+  state.unlocked = prevMod;
+  showLoading('Bloqueando módulo...');
+  try {
+    await apiPost({ action: 'unlock', modId: prevMod });
+    renderParentContent();
+    showToast(`🔒 Módulo ${modId} bloqueado. Activo: Módulo ${prevMod}`, 'red');
+  } catch(e) { showToast('Error al bloquear', 'red'); }
   finally { hideLoading(); }
 }
 
